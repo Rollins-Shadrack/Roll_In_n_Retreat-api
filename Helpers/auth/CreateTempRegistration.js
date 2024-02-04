@@ -11,10 +11,11 @@ const createTempRegistration = asyncHandler(async (req, entity, PrismaClient) =>
     const frontendUrl = process.env.FRONTEND_URL;
 
     const { cityId, ...resdata } = req;
-    const registrationId = uuid()
+    const registrationId = uuid();
     const encryptedToken = encryptData({ regId: registrationId, timestamp, email: req.email });
-    const confirmationUrl = `${api}/account/confirmation/${entity}?token=${encryptedToken}`;
-    const confirmationLink = `${frontendUrl}/confirmation/${entity}?token=${encryptedToken}`;
+    const confirmationUrl = `${api}/account/confirmation?token=${encryptedToken}`;
+    const confirmationLink =
+      entity === "user" ? `${frontendUrl}/auth/confirmation?token=${encryptedToken}` : `${frontendUrl}/onboard/profile?token=${encryptedToken}`;
 
     const temp = await PrismaClient.hold.create({
         data: {

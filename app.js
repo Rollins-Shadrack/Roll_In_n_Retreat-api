@@ -39,6 +39,8 @@ app.use('/uploads', express.static(__dirname + '/uploads'));
 
 //Routes
 app.use('/account', require('./routes/account/index'));
+app.use('/validation', require('./routes/validation/index'))
+app.use('/manager', require('./routes/manager/index'))
 
 // app.use(verifyJWT);
 // app.use('/app', require('./routes/app/demo'))

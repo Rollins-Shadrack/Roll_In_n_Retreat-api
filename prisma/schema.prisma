@@ -42,10 +42,247 @@ model account {
   deleted_at        DateTime? @db.Date
   created_at        DateTime  @default(now()) @db.Timestamptz(6)
   updated_at        DateTime  @default(now()) @db.Timestamptz(6)
-  partner           partner[]
-  staff             staff[]
-  user              user[]
+  partner           partner?
+  staff             staff?
+  user              user?
   sign_up           sign_up?
+}
+
+model addon {
+  id            String          @id @default(uuid())
+  name          String?         @db.VarChar(255)
+  name_unique   String?         @db.VarChar(255)
+  price         Int?
+  duration      Int?
+  description   String?
+  partner_id    String          @unique
+  features      Json?
+  is_active     Boolean         @default(true)
+  data          Json?
+  deleted_at    DateTime?       @db.Date
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime        @default(now()) @db.Timestamptz(6)
+  partner       partner         @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  booking_addon booking_addon[]
+  hotel_addon   hotel_addon[]
+  service_addon service_addon?
+
+  @@unique([name, partner_id], map: "addon_name_partnerid_unique")
+}
+
+model address {
+  id            String    @id @default(uuid())
+  country       String?   @db.VarChar(255)
+  town_city     String?   @db.VarChar(255)
+  address_line1 String?   @db.VarChar(255)
+  address_line2 String?   @db.VarChar(255)
+  address_line3 String?   @db.VarChar(255)
+  postal_code   String?   @db.VarChar(255)
+  location      Json?
+  data          Json?
+  deleted_at    DateTime? @db.Date
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+  partner       partner[]
+  staff         staff[]
+  user          user[]
+}
+
+model amenities {
+  id         String    @id @default(uuid())
+  partner_id String    @unique(map: "amenities_partnerid_unique")
+  amenity    Json      @default("{}")
+  data       Json?
+  deleted_at DateTime? @db.Date
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+  partner    partner   @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model booking {
+  id              String          @id @default(uuid())
+  booking_date    DateTime        @db.Date
+  start_date      DateTime        @db.Timestamptz(6)
+  end_date        DateTime        @db.Timestamptz(6)
+  duration        Int?
+  entity_type     String          @default("user") @db.VarChar(255)
+  partner_id      String          @unique
+  user_id         String          @unique
+  room_id         String          @unique
+  booking_comment String?         @db.VarChar(255)
+  addon_id        String[]        @unique
+  booking_addon   booking_addon[]
+  comment         comment[]
+  user            user            @relation(fields: [user_id], references: [id])
+  partner         partner         @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  deleted_at      DateTime?       @db.Date
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime        @default(now()) @db.Timestamptz(6)
+  service         service?        @relation(fields: [serviceId], references: [id])
+  serviceId       String?
+}
+
+model booking_addon {
+  id                String    @id @default(uuid())
+  booking_id        String
+  addon_id          String
+  addon_name        String?   @db.VarChar(255)
+  addon_description String?   @db.VarChar(255)
+  addon_price       Int?
+  addon_duration    Int?
+  data              Json?
+  deleted_at        DateTime? @db.Date
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @db.Timestamptz(6)
+  addon             addon     @relation(fields: [addon_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  booking           booking   @relation(fields: [booking_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model business_hours {
+  id             String    @id @default(uuid())
+  partner_id     String
+  business_hours Json?
+  break_time     Json?
+  data           Json?
+  deleted_at     DateTime? @db.Date
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime  @default(now()) @db.Timestamptz(6)
+  effective_date DateTime  @default(now()) @db.Date
+  is_active      Boolean   @default(true)
+  partner        partner   @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([partner_id, effective_date], map: "businesshours_partnerid_effectivedate_unique")
+}
+
+model booking_rules {
+  id                    String    @id @default(uuid())
+  partner_id            String    @unique()
+  deposit               Json?
+  online_payment_active Boolean?  @default(false)
+  group_booking         Json?
+  booking_period        Json?
+  cancellation_rules    Json?
+  confirmation_rule     Json?
+  deleted_at            DateTime? @db.Date
+  data                  Json?
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @db.Timestamptz(6)
+  partner               partner   @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model business_type {
+  id          String    @id @default(uuid())
+  name        String    @db.VarChar(255)
+  name_unique String?   @unique() @db.VarChar(255)
+  data        Json?
+  deleted_at  DateTime? @db.Date
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @default(now()) @db.Timestamptz(6)
+  partner     partner[]
+}
+
+model city {
+  id         String    @id @default(uuid())
+  name       String    @db.VarChar(255)
+  data       Json?
+  deleted_at DateTime? @db.Date
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+  partner    partner[]
+}
+
+model comment {
+  id                     String            @id @default(uuid())
+  comments               String?
+  staff_id               String
+  partner_id             String
+  is_published           Boolean           @default(true)
+  disputed               Boolean           @default(false)
+  is_verified_by_partner Boolean           @default(false)
+  is_verified_by_staff   Boolean           @default(false)
+  is_vetted              Boolean           @default(false)
+  is_nominated           Boolean           @default(false)
+  rating                 Int
+  booking_id             String
+  data                   Json?
+  deleted_at             DateTime?         @db.Date
+  created_at             DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime          @default(now()) @db.Timestamptz(6)
+  booking                booking           @relation(fields: [booking_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  partner                partner           @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staff                  staff             @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  comment_dispute        comment_dispute[]
+}
+
+model comment_dispute {
+  id                 String             @id @default(uuid())
+  comment_id         String
+  partner_id         String
+  dispute_reason_id  String
+  resolved           Boolean            @default(false)
+  resolution_id      String
+  data               Json?
+  deleted_at         DateTime?          @db.Date
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime           @default(now()) @db.Timestamptz(6)
+  comment            comment            @relation(fields: [comment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dispute_reason     dispute_reason     @relation(fields: [dispute_reason_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  partner            partner            @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  comment_resolution comment_resolution @relation(fields: [resolution_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model comment_resolution {
+  id              String            @id @default(uuid())
+  name            String?           @db.VarChar(255)
+  name_unique     String?           @db.VarChar(255)
+  data            Json?
+  deleted_at      DateTime?         @db.Date
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  comment_dispute comment_dispute[]
+}
+
+model dispute_reason {
+  id              String            @id @default(uuid())
+  name            String?           @db.VarChar(255)
+  name_unique     String?           @db.VarChar(255)
+  data            Json?
+  deleted_at      DateTime?         @db.Date
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  comment_dispute comment_dispute[]
+}
+
+model hotel_addon {
+  id         String    @id @default(uuid())
+  addon_id   String
+  hotel_id   String
+  is_active  Boolean   @default(true)
+  deleted_at DateTime? @db.Date
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  // Associations
+  addon addon   @relation(fields: [addon_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  hotel partner @relation(fields: [hotel_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([addon_id, hotel_id], map: "hoteladdon_addonid_hotelid_unique")
+}
+
+model hotel_room {
+  id              String   @id @default(uuid())
+  room_number     Int
+  room_type       String
+  price_per_night Int
+  is_available    Boolean  @default(true)
+  description     String?
+  amenities       Json?
+  hotel_id        String   @unique
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @default(now()) @db.Timestamptz(6)
+  hotel           partner  @relation(fields: [hotel_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([room_number, hotel_id], map: "hotelroom_roomnumber_hotelid_unique")
 }
 
 model sign_up {
@@ -68,34 +305,150 @@ model sign_up {
   hold                    hold?     @relation(fields: [holding_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model user {
-  id            String         @id @default(uuid())
-  first_name    String         @db.VarChar(255)
-  last_name     String         @db.VarChar(255)
-  gender        String?
-  mobile_number String         @db.VarChar(255)
-  user_role_id  String?        @unique
-  user_address  String?        @unique
-  entity_type   String         @default("user") @db.VarChar(255)
-  deleted_at    DateTime?      @db.Date
-  created_at    DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime       @default(now()) @db.Timestamptz(6)
-  booking       booking[]
-  user_profile  user_profile[]
-  account       account        @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  account_id    String         @unique
+model partner {
+  id                       String                    @id @default(uuid())
+  business_name            String                    @db.VarChar(255)
+  first_name               String                    @db.VarChar(255)
+  last_name                String                    @db.VarChar(255)
+  mobile_number            String?                   @db.VarChar(255)
+  working_pattern          workingpattern            @default(standard)
+  staff_count              staffrange                @default(onetofive)
+  membership_type_id       String?
+  business_type_id         String?
+  partner_address_id       String?
+  is_marketplace_active    Boolean                   @default(true)
+  suspension_reason_id     String?
+  main_service_category_id String?                   @unique
+  addon                    addon[]
+  amenities                amenities?
+  booking                  booking[]
+  booking_rules            booking_rules?
+  business_hours           business_hours[]
+  comment                  comment[]
+  comment_dispute          comment_dispute[]
+  hotel_rooms              hotel_room[]
+  hotel_addon              hotel_addon[]
+  business_type            business_type?            @relation(fields: [business_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account                  account                   @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  membership_type          membership_type?          @relation(fields: [membership_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  address                  address?                  @relation(fields: [partner_address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service_category         service_category?         @relation(fields: [main_service_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account_id               String                    @unique
+  city_id                  String?                   @unique
+  city                     city?                     @relation(fields: [city_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  deleted_at               DateTime?                 @db.Date
+  created_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  partner_service_category partner_service_category?
+  service                  service[]
+  staff                    staff[]
 }
 
-model partner {
-  id         String  @id @default(uuid())
-  account    account @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  account_id String  @unique
+model partner_service_category {
+  id                  String            @id @default(uuid())
+  partner_id          String?           @unique
+  service_category_id String?           @unique
+  is_main             Boolean?          @default(false)
+  enabled             Boolean           @default(false)
+  data                Json?
+  deleted_at          DateTime?         @db.Date
+  created_at          DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime          @default(now()) @db.Timestamptz(6)
+  partner             partner?          @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service_category    service_category? @relation(fields: [service_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([partner_id, service_category_id], map: "partnerservicecategory_partnerid_servicecategoryid_unique")
+}
+
+model service {
+  id                           String           @id @default(uuid())
+  name                         String?          @db.VarChar(255)
+  name_unique                  String?          @db.VarChar(255)
+  description                  String?
+  is_active                    Boolean          @default(false)
+  activation_date              DateTime?        @default(now()) @db.Date
+  has_add_on                   Boolean?         @default(false)
+  service_visbility_id         String
+  confirmation_type_id         String
+  service_category_id          String
+  service_internal_category_id String?
+  partner_id                   String
+  slug                         String?          @unique() @db.VarChar(255)
+  data                         Json?
+  deleted_at                   DateTime?        @db.Date
+  created_at                   DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime         @default(now()) @db.Timestamptz(6)
+  booking                      booking[]
+  partner                      partner          @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service_category             service_category @relation(fields: [service_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service_addon                service_addon[]
+
+  @@unique([name, partner_id], map: "service_name_partnerid_unique")
+}
+
+model service_addon {
+  id         String    @id @default(uuid())
+  service_id String    @unique
+  addon_id   String    @unique
+  is_active  Boolean   @default(true)
+  data       Json?
+  deleted_at DateTime? @db.Date
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+  addon      addon     @relation(fields: [addon_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service    service   @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([service_id, addon_id], map: "serviceaddon_serviceid_addonid_unique")
+}
+
+model service_category {
+  id                       String                     @id @default(uuid())
+  name                     String?                    @db.VarChar(255)
+  name_unique              String?                    @unique() @db.VarChar(255)
+  is_active                Boolean                    @default(true)
+  data                     Json?
+  deleted_at               DateTime?                  @db.Date
+  created_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  partner                  partner[]
+  partner_service_category partner_service_category[]
+  service                  service[]
+  service_sub_category     service_sub_category[]
+}
+
+model service_sub_category {
+  id                  String           @id @default(uuid())
+  name                String?          @db.VarChar(255)
+  name_unique         String?          @unique() @db.VarChar(255)
+  service_category_id String           @unique
+  data                Json?
+  deleted_at          DateTime?        @db.Date
+  created_at          DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime         @default(now()) @db.Timestamptz(6)
+  service_category    service_category @relation(fields: [service_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model staff {
-  id         String  @id @default(uuid())
-  account    account @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  account_id String  @unique
+  id               String          @id @default(uuid())
+  first_name       String          @db.VarChar(255)
+  last_name        String          @db.VarChar(255)
+  mobile_number    String?         @db.VarChar(255)
+  email            String          @db.VarChar(255)
+  is_super_admin   Boolean         @default(false)
+  staff_profile    staff_profile[]
+  partner_id       String          @unique
+  account_id       String?         @unique
+  staff_address_id String          @unique
+  comment          comment[]
+  address          address         @relation(fields: [staff_address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account          account?        @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  partner          partner         @relation(fields: [partner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model staff_profile {
+  id       String @id @default(uuid())
+  staff_id String @unique
+  staff    staff  @relation(fields: [staff_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model user_profile {
@@ -114,24 +467,6 @@ model user_profile {
   preference_id            String?     @unique
 }
 
-model booking {
-  id              String    @id @default(uuid())
-  booking_date    DateTime  @db.Date
-  start_date      DateTime  @db.Timestamptz(6)
-  end_date        DateTime  @db.Timestamptz(6)
-  duration        Int?
-  entity_type     String    @default("user") @db.VarChar(255)
-  partner_id      String    @unique
-  user_id         String    @unique
-  room_id         String    @unique
-  booking_comment String?   @db.VarChar(255)
-  addon_id        String[]  @unique
-  user            user      @relation(fields: [user_id], references: [id])
-  deleted_at      DateTime? @db.Date
-  created_at      DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
-}
-
 model preference {
   id           String        @id @default(uuid())
   entity_type  entitytype?
@@ -145,6 +480,37 @@ model preference {
   created_at   DateTime      @default(now()) @db.Timestamptz(6)
   updated_at   DateTime      @default(now()) @db.Timestamptz(6)
   user_profile user_profile?
+}
+
+model membership_type {
+  id          String    @id @default(uuid())
+  name        String    @default("base") @db.VarChar(255)
+  name_unique String?   @unique() @db.VarChar(255)
+  data        Json?
+  deleted_at  DateTime? @db.Date
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @default(now()) @db.Timestamptz(6)
+  partner     partner[]
+}
+
+model user {
+  id              String         @id @default(uuid())
+  first_name      String         @db.VarChar(255)
+  last_name       String         @db.VarChar(255)
+  gender          String?
+  mobile_number   String         @db.VarChar(255)
+  user_role_id    String?        @unique
+  user_address    String?        @unique
+  entity_type     String         @default("user") @db.VarChar(255)
+  deleted_at      DateTime?      @db.Date
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime       @default(now()) @db.Timestamptz(6)
+  booking         booking[]
+  user_profile    user_profile[]
+  account_id      String         @unique
+  user_address_id String?         @unique
+  address         address?       @relation(fields: [user_address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account         account        @relation(fields: [account_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum accounttype {
@@ -166,4 +532,16 @@ enum accountstatus {
   deleted
   confirmed
   suspended
+}
+
+enum workingpattern {
+  standard
+  rota
+}
+
+enum staffrange {
+  onetofive
+  fivetoten
+  tentofifteen
+  morethanfifteen
 }
