@@ -12,12 +12,14 @@ const handleRefreshtoken = asyncHandler(async (req, res, next) => {
       },
     },
   });
+
   if (!foundUser) return res.sendStatus(403);
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-    if (err || foundUser.email !== decoded.email) return res.sendStatus(403);
+    if (err || foundUser.email !== decoded.userInfo.email) return res.sendStatus(403);
     const accessToken = jwt.sign(
       {
+        role: decoded.role,
         userInfo: {
           email: foundUser.email,
         },
@@ -25,7 +27,7 @@ const handleRefreshtoken = asyncHandler(async (req, res, next) => {
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "1d" }
     );
-    res.status(200).json({accessToken});
+    res.status(200).json({ user: foundUser, accessToken, role: decoded.role });
   });
 });
 

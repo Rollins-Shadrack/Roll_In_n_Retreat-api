@@ -136,7 +136,22 @@ const confirmPartner = asyncHandler(async (req, res, next) => {
         },
       });
 
-      return partnerDetails
+      const partnerwithRelations = await prisma.account.findUnique({
+        where: { id: partnerDetails.id },
+        include: {
+          partner: {
+            include: {
+              staff: {
+                include: {
+                  staff_profile:true
+                }
+              }
+            }
+          }
+        }
+      })
+
+      return partnerwithRelations;
     })
 
     await prisma.sign_up.update({
@@ -145,6 +160,8 @@ const confirmPartner = asyncHandler(async (req, res, next) => {
     });
 
     await prisma.hold.update({ where: { id: accountInfo.id }, data: { account_status: "confirmed" } });
+
+    console.log(partnerTransaction)
 
     if (partnerTransaction) {
       await prisma.staff.update({

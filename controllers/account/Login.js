@@ -17,6 +17,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
     });
 
     if (!foundUser) return res.status(404).json({ message: "User not found" }); //not found
+    if(foundUser.entity !== "user") return res.status(403).json({message:"Unauthorized"})
     const match = await bcrypt.compare(password, foundUser.password);
 
     if (!match) return res.status(400).json({ message: "Incorrect email or Password" });
@@ -68,14 +69,15 @@ const loginPartner = asyncHandler(async (req, res, next) => {
         staff: true,
       },
     });
-
     if (!foundUser) return res.status(404).json({ message: "User not Found" });
+    if (foundUser.entity !== "partner" && foundUser.entity !== "staff") return res.status(403).json({ message: "Unauthorized" });
     const match = await bcrypt.compare(password, foundUser.password);
 
     if (!match) return res.status(400).json({ message: "Incorrect email or Password" });
 
     const accessToken = jwt.sign(
       {
+        role: "staff",
         userInfo: {
           email: foundUser.email,
         },
@@ -86,7 +88,10 @@ const loginPartner = asyncHandler(async (req, res, next) => {
 
     const refreshToken = jwt.sign(
       {
-        email: foundUser.email,
+        role: "staff",
+        userInfo: {
+          email: foundUser.email,
+        },
       },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: "1d" }
@@ -101,7 +106,7 @@ const loginPartner = asyncHandler(async (req, res, next) => {
 
     res.cookie("authjwt", refreshToken, { httpOnly: true, secure: true, sameSite: "none", maxAge: 24 * 60 * 60 * 1000 });
 
-    res.json({ user: foundUser, accessToken, refreshToken });
+    res.json({ user: foundUser, accessToken, refreshToken, role:"staff" });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: "Internal server error" });

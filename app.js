@@ -8,7 +8,6 @@ const corsConfig = require('./config/corsOptions')
 
 //importing middlewares
 const {notFound, errorHandler} = require('./middleware/errorMiddleware');
-const verifyJWT = require('./middleware/authMiddleware');
 
 //configurations
 const app = express();
@@ -40,10 +39,10 @@ app.use('/uploads', express.static(__dirname + '/uploads'));
 //Routes
 app.use('/account', require('./routes/account/index'));
 app.use('/validation', require('./routes/validation/index'))
+app.use('/app',require('./routes/app/index'))
 app.use('/manager', require('./routes/manager/index'))
 
-// app.use(verifyJWT);
-// app.use('/app', require('./routes/app/demo'))
+
 
 //Middlewares
 app.use(notFound);
