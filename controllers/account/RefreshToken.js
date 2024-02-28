@@ -11,6 +11,10 @@ const handleRefreshtoken = asyncHandler(async (req, res, next) => {
         has: refreshToken,
       },
     },
+    include: {
+      partner: true,
+      staff:true
+    }
   });
 
   if (!foundUser) return res.sendStatus(403);

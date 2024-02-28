@@ -16,7 +16,7 @@ const asyncHandler = require('express-async-handler')
  * @Response All staff members
  */
 const getAllStaffMembers = asyncHandler(async (req, res, next) => {
-    console.log("crud current user",req.user)
+    // console.log("crud current user",req.user)
 })
 
 /**
